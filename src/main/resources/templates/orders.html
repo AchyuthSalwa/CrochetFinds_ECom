@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - CrochetFinds</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .orders-container {
+            max-width: 1200px;
+            margin: 2em auto;
+            padding: 0 1em;
+        }
+        .order-card {
+            background: white;
+            padding: 2em;
+            margin-bottom: 2em;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5em;
+            padding-bottom: 1em;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .order-id {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #8B4C89;
+        }
+        .order-date {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .order-status {
+            padding: 0.5em 1em;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d1ecf1; color: #0c5460; }
+        .status-shipped { background: #cce5ff; color: #004085; }
+        .status-delivered { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+        .order-item {
+            display: flex;
+            padding: 1em;
+            margin-bottom: 1em;
+            background: #f8f9fa;
+            border-radius: 5px;
+            align-items: center;
+            gap: 1.5em;
+        }
+        .order-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .order-item-info {
+            flex: 1;
+        }
+        .order-item-name {
+            font-weight: 600;
+            margin-bottom: 0.25em;
+        }
+        .order-item-details {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .order-item-price {
+            font-weight: 600;
+            color: #8B4C89;
+        }
+        .order-total {
+            margin-top: 1.5em;
+            padding-top: 1.5em;
+            border-top: 2px solid #f0f0f0;
+            text-align: right;
+        }
+        .order-total-label {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+        .order-total-amount {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #8B4C89;
+            margin-top: 0.5em;
+        }
+        .empty-orders {
+            text-align: center;
+            padding: 4em 2em;
+        }
+        .empty-orders h2 {
+            color: #666;
+            margin-bottom: 1em;
+        }
+        .success-message, .error-message {
+            padding: 0.75em;
+            border-radius: 5px;
+            margin-bottom: 1em;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <h1 class="site-name">CrochetFinds</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/products">All Products</a></li>
+                    <li><a href="/cart">Cart</a></li>
+                    <li><a href="/orders" class="active">My Orders</a></li>
+                    <li th:if="${session.user != null and session.user.isAdmin}"><a href="/admin/products">Admin Panel</a></li>
+                    <li>
+                        <span th:if="${session.user != null}" th:text="${session.user.firstName}"></span>
+                        <form th:if="${session.user != null}" th:action="@{/logout}" method="post" style="display: inline;">
+                            <button type="submit" style="background: none; border: none; color: inherit; cursor: pointer; text-decoration: underline;">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <section class="orders-container">
+        <h2 style="margin-bottom: 1.5em;">My Orders</h2>
+
+        <div th:if="${success}" class="success-message" th:text="${success}"></div>
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+        <div th:if="${orders != null and !orders.isEmpty()}">
+            <div th:each="order : ${orders}" class="order-card">
+                <div class="order-header">
+                    <div>
+                        <div class="order-id">Order #<span th:text="${order.id}"></span></div>
+                        <div class="order-date" th:text="${#temporals.format(order.createdAt, 'MMMM dd, yyyy HH:mm')}"></div>
+                    </div>
+                    <div>
+                        <span class="order-status" 
+                              th:classappend="'status-' + ${order.status.toString().toLowerCase()}"
+                              th:text="${order.status}"></span>
+                    </div>
+                </div>
+
+                <div th:each="item : ${order.items}" class="order-item">
+                    <img th:if="${item.product.imageUrl != null and !item.product.imageUrl.isEmpty()}" 
+                         th:src="${item.product.imageUrl}" 
+                         th:alt="${item.product.name}"
+                         class="order-item-image">
+                    <div class="placeholder-image" th:if="${item.product.imageUrl == null or item.product.imageUrl.isEmpty()}" 
+                         style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; background: #e0e0e0; border-radius: 5px; font-size: 0.8em;">Image</div>
+                    
+                    <div class="order-item-info">
+                        <div class="order-item-name" th:text="${item.product.name}"></div>
+                        <div class="order-item-details">
+                            Quantity: <span th:text="${item.quantity}"></span> × 
+                            <span th:text="'$' + ${#numbers.formatDecimal(item.price, 1, 2)}"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="order-item-price" th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 1, 2)}"></div>
+                </div>
+
+                <div class="order-total">
+                    <div class="order-total-label">Total Amount:</div>
+                    <div class="order-total-amount" th:text="'$' + ${#numbers.formatDecimal(order.totalAmount, 1, 2)}"></div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${orders == null or orders.isEmpty()}" class="empty-orders">
+            <h2>No orders yet</h2>
+            <p style="color: #666; margin-bottom: 2em;">Start shopping to place your first order!</p>
+            <a href="/products" style="display: inline-block; padding: 0.75em 2em; background: #8B4C89; color: white; text-decoration: none; border-radius: 5px; font-weight: 600;">Browse Products</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2026 CrochetFinds. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

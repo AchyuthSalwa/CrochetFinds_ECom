@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Setup</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .setup-container {
+            max-width: 500px;
+            margin: 4em auto;
+            padding: 2em;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5em;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75em;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 0.75em;
+            background: #8B4C89;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-primary:hover {
+            background: #6B3A69;
+        }
+        .success-message, .error-message {
+            padding: 0.75em;
+            border-radius: 5px;
+            margin-bottom: 1em;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 1em;
+            border-radius: 5px;
+            margin-bottom: 1em;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <h1 class="site-name">CrochetFinds</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <section class="setup-container">
+        <h2>Make User Admin</h2>
+        
+        <div class="warning">
+            <strong>Note:</strong> This is a setup utility. In production, this should be secured or removed.
+        </div>
+
+        <div th:if="${success}" class="success-message" th:text="${success}"></div>
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+        
+        <form th:action="@{/admin/setup/make-admin}" method="post">
+            <div class="form-group">
+                <label for="email">User Email</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="user@example.com">
+                <small style="display: block; margin-top: 0.25em; color: #666;">
+                    Enter the email of the user you want to make an admin
+                </small>
+            </div>
+            
+            <button type="submit" class="btn-primary">Make Admin</button>
+        </form>
+        
+        <div style="margin-top: 2em; padding-top: 2em; border-top: 1px solid #eee;">
+            <p style="color: #666; font-size: 0.9em;">
+                <strong>Instructions:</strong><br>
+                1. First, register a user account normally<br>
+                2. Then use this form to make that user an admin<br>
+                3. Login with that account to access the admin panel
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2026 CrochetFinds. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

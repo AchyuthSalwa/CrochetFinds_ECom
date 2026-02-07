@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product.id != null ? 'Edit Product' : 'Add New Product'}">Product Form - Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .form-container {
+            max-width: 800px;
+            margin: 2em auto;
+            padding: 2em;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5em;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75em;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .form-group small {
+            display: block;
+            margin-top: 0.25em;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .form-actions {
+            display: flex;
+            gap: 1em;
+            margin-top: 2em;
+        }
+        .btn-primary {
+            padding: 0.75em 2em;
+            background: #8B4C89;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-primary:hover {
+            background: #6B3A69;
+        }
+        .btn-secondary {
+            padding: 0.75em 2em;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .success-message, .error-message {
+            padding: 0.75em;
+            border-radius: 5px;
+            margin-bottom: 1em;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <h1 class="site-name">CrochetFinds - Admin</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/products">All Products</a></li>
+                    <li><a href="/cart">Cart</a></li>
+                    <li><a href="/orders">My Orders</a></li>
+                    <li><a href="/admin/products">Admin Panel</a></li>
+                    <li>
+                        <span th:if="${session.user != null}" th:text="${session.user.firstName}"></span>
+                        <form th:if="${session.user != null}" th:action="@{/logout}" method="post" style="display: inline; margin-left: 0.5em;">
+                            <button type="submit" style="background: none; border: none; color: inherit; cursor: pointer; text-decoration: underline;">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <section class="form-container">
+        <h2 th:text="${product.id != null ? 'Edit Product' : 'Add New Product'}">Product Form</h2>
+
+        <div th:if="${success}" class="success-message" th:text="${success}"></div>
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+        <form th:action="@{/admin/products/save}" th:object="${product}" method="post">
+            <input type="hidden" name="id" th:value="${product.id}">
+            
+            <div class="form-group">
+                <label for="name">Product Name *</label>
+                <input type="text" id="name" name="name" th:value="${product.name}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" th:text="${product.description}"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="price">Price ($) *</label>
+                    <input type="number" id="price" name="price" th:value="${product.price}" step="0.01" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="discount">Discount ($)</label>
+                    <input type="number" id="discount" name="discount" th:value="${product.discount}" step="0.01" min="0">
+                    <small>Leave 0 for no discount</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="stock">Stock Quantity *</label>
+                    <input type="number" id="stock" name="stock" th:value="${product.stock}" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <input type="text" id="category" name="category" th:value="${product.category}" 
+                           list="categories" placeholder="Enter or select category">
+                    <datalist id="categories">
+                        <option th:each="cat : ${categories}" th:value="${cat}"></option>
+                    </datalist>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="imageUrl">Image URL or Path</label>
+                    <input type="text" id="imageUrl" name="imageUrl" th:value="${product.imageUrl}" 
+                           placeholder="https://example.com/image.jpg or /images/image.jpg">
+                    <small th:if="${product.id == null}">Enter a direct image URL (must end with .jpg, .png, .gif, etc.) or file path. Shortened URLs (like TinyURL) won't work.</small>
+                    <small th:if="${product.id != null}">Leave empty to keep existing image. Use direct image URLs only (not shortened links).</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="rating">Rating</label>
+                    <input type="number" id="rating" name="rating" th:value="${product.rating}" 
+                           step="0.1" min="0" max="5">
+                    <small>Rating from 0.0 to 5.0</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" th:text="${product.id != null ? 'Update Product' : 'Create Product'}">Save</button>
+                <a href="/admin/products" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2026 CrochetFinds. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

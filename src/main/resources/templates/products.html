@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Products - CrochetFinds</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .filter-container {
+            background: #f8f9fa;
+            padding: 2em;
+            border-radius: 8px;
+            margin-bottom: 2em;
+        }
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1em;
+            align-items: end;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .filter-group label {
+            margin-bottom: 0.5em;
+            font-weight: 600;
+            color: #333;
+        }
+        .filter-group input,
+        .filter-group select {
+            padding: 0.75em;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 1em;
+        }
+        .btn-filter {
+            padding: 0.75em 1.5em;
+            background: #8B4C89;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-filter:hover {
+            background: #6B3A69;
+        }
+        .btn-clear {
+            padding: 0.75em 1.5em;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-clear:hover {
+            background: #5a6268;
+        }
+        .results-info {
+            margin-bottom: 1em;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .rating-display {
+            display: flex;
+            align-items: center;
+            gap: 0.3em;
+            margin: 0.5em 0;
+        }
+        .star {
+            color: #FFA500;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <h1 class="site-name">CrochetFinds</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/products" class="active">All Products</a></li>
+                    <li th:if="${session.user == null}"><a href="/login">Login</a></li>
+                    <li th:if="${session.user == null}"><a href="/register">Register</a></li>
+                    <li th:if="${session.user != null}"><a href="/cart">Cart</a></li>
+                    <li th:if="${session.user != null}"><a href="/orders">My Orders</a></li>
+                    <li th:if="${session.user != null and session.user.isAdmin}"><a href="/admin/products">Admin Panel</a></li>
+                    <li th:if="${session.user != null}">
+                        <span th:text="${session.user.firstName}"></span>
+                        <form th:action="@{/logout}" method="post" style="display: inline; margin-left: 0.5em;">
+                            <button type="submit" style="background: none; border: none; color: inherit; cursor: pointer; text-decoration: underline;">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <section class="products" style="padding: 2em 0;">
+        <div class="products-container">
+            <h2 style="margin-bottom: 1em;">All Products</h2>
+            
+            <!-- Filter Section -->
+            <div class="filter-container">
+                <form th:action="@{/products}" method="get" class="filter-form">
+                    <div class="filter-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category">
+                            <option value="">All Categories</option>
+                            <option th:each="cat : ${categories}" 
+                                    th:value="${cat}" 
+                                    th:text="${cat}"
+                                    th:selected="${selectedCategory == cat}"></option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="minPrice">Min Price ($)</label>
+                        <input type="number" id="minPrice" name="minPrice" 
+                               th:value="${selectedMinPrice}" 
+                               step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="maxPrice">Max Price ($)</label>
+                        <input type="number" id="maxPrice" name="maxPrice" 
+                               th:value="${selectedMaxPrice}" 
+                               step="0.01" min="0" placeholder="100.00">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="minRating">Min Rating</label>
+                        <select id="minRating" name="minRating">
+                            <option value="">Any Rating</option>
+                            <option value="4.5" th:selected="${selectedMinRating == '4.5'}">4.5+ Stars</option>
+                            <option value="4.0" th:selected="${selectedMinRating == '4.0'}">4.0+ Stars</option>
+                            <option value="3.5" th:selected="${selectedMinRating == '3.5'}">3.5+ Stars</option>
+                            <option value="3.0" th:selected="${selectedMinRating == '3.0'}">3.0+ Stars</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-buttons">
+                        <button type="submit" class="btn-filter">Apply Filters</button>
+                        <a th:href="@{/products}" class="btn-clear" style="text-decoration: none; display: inline-block;">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${success}" style="background: #d4edda; color: #155724; padding: 0.75em; border-radius: 5px; margin-bottom: 1em;" th:text="${success}"></div>
+            <div th:if="${error}" style="background: #f8d7da; color: #721c24; padding: 0.75em; border-radius: 5px; margin-bottom: 1em;" th:text="${error}"></div>
+
+            <!-- Results Info -->
+            <div class="results-info" th:if="${products != null}">
+                <span th:text="${#lists.size(products)} + ' product(s) found'"></span>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="product-grid" th:if="${products != null and !products.isEmpty()}">
+                <div class="product-card" th:each="product : ${products}">
+                    <div class="product-image">
+                        <div class="placeholder-image" th:if="${product.imageUrl == null or product.imageUrl.isEmpty()}">Image</div>
+                        <img th:if="${product.imageUrl != null and !product.imageUrl.isEmpty()}" 
+                             th:src="${product.imageUrl}" 
+                             th:alt="${product.name}"
+                             style="width: 100%; height: 200px; object-fit: cover;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="placeholder-image" style="display: none; width: 100%; height: 200px; align-items: center; justify-content: center; background: #f0f0f0; border-radius: 5px; color: #999;">Image Not Found</div>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name" th:text="${product.name}">Product Name</h3>
+                        <div class="rating-display">
+                            <span class="star">★</span>
+                            <span th:text="${product.rating}" style="font-weight: 600; color: #333;"></span>
+                        </div>
+                        <p class="product-description" th:text="${product.description}" 
+                           style="font-size: 0.9em; color: #666; margin: 0.5em 0; min-height: 3em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;"></p>
+                        <p class="product-price">
+                            <span th:if="${product.discount != null and product.discount > 0}" 
+                                  style="text-decoration: line-through; color: #999; margin-right: 0.5em;"
+                                  th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}"></span>
+                            <span th:text="'$' + ${#numbers.formatDecimal(product.discountedPrice, 1, 2)}" 
+                                  style="color: #8B4C89; font-weight: 600;"></span>
+                            <span th:if="${product.discount != null and product.discount > 0}" 
+                                  style="color: #28a745; font-size: 0.9em; margin-left: 0.5em;"
+                                  th:text="'Save $' + ${#numbers.formatDecimal(product.discount, 1, 2)}"></span>
+                        </p>
+                        <p class="product-stock" th:if="${product.stock > 0}" 
+                           th:text="'In Stock: ' + ${product.stock}"
+                           style="font-size: 0.85em; color: #28a745; margin: 0.25em 0;"></p>
+                        <p class="product-stock" th:if="${product.stock == 0}" 
+                           style="font-size: 0.85em; color: #dc3545; margin: 0.25em 0;">Out of Stock</p>
+                        
+                        <!-- Cart Controls -->
+                        <div th:if="${session.user != null}" style="margin-top: 0.5em;">
+                            <!-- Show quantity controls if item is in cart -->
+                            <div th:if="${cartQuantities != null and cartQuantities.containsKey(product.id)}" 
+                                 style="display: flex; align-items: center; justify-content: center; gap: 0.5em;">
+                                <form th:action="@{/cart/update-quantity}" method="post" style="display: inline;">
+                                    <input type="hidden" name="productId" th:value="${product.id}">
+                                    <input type="hidden" name="quantity" th:value="${cartQuantities.get(product.id) - 1}">
+                                    <input type="hidden" name="redirectTo" value="/products">
+                                    <button type="submit" 
+                                            style="width: 35px; height: 35px; border: 2px solid #8B4C89; background: white; color: #8B4C89; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.2em;"
+                                            th:disabled="${cartQuantities.get(product.id) <= 1}">-</button>
+                                </form>
+                                <span style="min-width: 40px; text-align: center; font-weight: 600; color: #8B4C89;" 
+                                      th:text="'In Cart: ' + ${cartQuantities.get(product.id)}"></span>
+                                <form th:action="@{/cart/update-quantity}" method="post" style="display: inline;">
+                                    <input type="hidden" name="productId" th:value="${product.id}">
+                                    <input type="hidden" name="quantity" th:value="${cartQuantities.get(product.id) + 1}">
+                                    <input type="hidden" name="redirectTo" value="/products">
+                                    <button type="submit" 
+                                            style="width: 35px; height: 35px; border: 2px solid #8B4C89; background: #8B4C89; color: white; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.2em;"
+                                            th:disabled="${product.stock == 0 or cartQuantities.get(product.id) >= product.stock}">+</button>
+                                </form>
+                            </div>
+                            
+                            <!-- Show Add to Cart button if item is not in cart -->
+                            <form th:if="${cartQuantities == null or !cartQuantities.containsKey(product.id)}" 
+                                  th:action="@{/cart/add}" method="post" style="margin-top: 0.5em;">
+                                <input type="hidden" name="productId" th:value="${product.id}">
+                                <input type="hidden" name="quantity" value="1">
+                                <input type="hidden" name="redirectTo" value="/products">
+                                <button type="submit" class="add-to-cart-btn" th:disabled="${product.stock == 0}">Add to Cart</button>
+                            </form>
+                        </div>
+                        <a th:if="${session.user == null}" href="/login" class="add-to-cart-btn" style="display: inline-block; text-align: center; text-decoration: none; margin-top: 0.5em;">Login to Add</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div th:if="${products == null or products.isEmpty()}" style="text-align: center; padding: 3em;">
+                <p style="font-size: 1.2em; color: #666;">No products found matching your criteria.</p>
+                <a th:href="@{/products}" style="display: inline-block; margin-top: 1em; color: #8B4C89; text-decoration: underline;">Clear filters and view all products</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2024 CrochetFinds. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
